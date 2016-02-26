@@ -83,3 +83,15 @@ func TestSetIsSuperSetOf(t *testing.T) {
 	assert.True(t, set1.IsSupersetOf(set2))
 	assert.True(t, set1.IsSupersetOf(Empty())) // ø is a subset of everything
 }
+
+func TestSetEqual(t *testing.T) {
+	set1 := FromSlice([]string{
+		"foo", "bar", "baz",
+	})
+
+	set2 := FromSlice([]string{
+		"bar", "foo", "baz",
+	})
+
+	assert.True(t, set1.Equal(set2))
+}

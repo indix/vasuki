@@ -7,6 +7,7 @@ type Set interface {
 	Union(another Set) Set
 	Intersect(another Set) Set
 	IsSupersetOf(another Set) bool
+	Equal(another Set) bool
 	Size() int
 	Values() []string
 }
@@ -69,6 +70,17 @@ func (s *MapSet) IsSupersetOf(another Set) bool {
 	found := true
 	for _, elem := range another.Values() {
 		found = found && s.Contains(elem)
+	}
+	return found
+}
+
+// Equal another Set
+func (s *MapSet) Equal(another Set) bool {
+	found := s.Size() == another.Size()
+	if found {
+		for _, elem := range another.Values() {
+			found = found && s.Contains(elem)
+		}
 	}
 	return found
 }
