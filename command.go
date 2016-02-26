@@ -88,6 +88,6 @@ func init() {
 	vasukiCommand.PersistentFlags().StringVar(&password, "server-password", "badger", "Password of the User to connect to Go Server")
 
 	// docker related flags
-	vasukiCommand.PersistentFlags().StringVar(&dockerImage, "docker-image", "travix/go-agent", "Docker image used for spinning up the agent")
+	vasukiCommand.PersistentFlags().StringVar(&dockerImage, "docker-image", "ashwanthkumar/gocd-agent", "Docker image used for spinning up the agent")
 	vasukiCommand.PersistentFlags().StringVar(&dockerEndpoint, "docker-endpoint", "unix:///var/run/docker.sock", "Docker endpoint to connect to")
 }
