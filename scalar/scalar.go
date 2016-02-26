@@ -6,6 +6,7 @@ import (
 
 	"github.com/ashwanthkumar/go-gocd"
 	"github.com/ashwanthkumar/vasuki/executor"
+	"github.com/ashwanthkumar/vasuki/utils/sets"
 	"github.com/hashicorp/go-multierror"
 )
 
@@ -49,29 +50,49 @@ func (s *SimpleScalar) client() *gocd.Client {
 func (s *SimpleScalar) Execute() error {
 	var resultErr *multierror.Error
 	pendingJobs, err := s.ScheduledJobs() // demand
-	multierror.Append(resultErr, err)
-	idleAgents, err := s.IdleAgents() // supply
-	multierror.Append(resultErr, err)
+	idleAgents, err := s.IdleAgents()     // supply - from GoCD Server
+	updateErrors(resultErr, err)
+	executorReportedAgentIds, err := executor.DefaultExecutor.ManagedAgents() // supply - from Executor instance
+	updateErrors(resultErr, err)
 	if resultErr.ErrorOrNil() != nil {
 		return resultErr.ErrorOrNil()
 	}
+	var idleAgentIds []string
+	for _, idleAgent := range idleAgents {
+		idleAgentIds = append(idleAgentIds, idleAgent.UUID)
+	}
+	// fmt.Printf("Idle Agents =%v\n", idleAgentIds)
+	supplyAgents := sets.FromSlice(executorReportedAgentIds).Union(sets.FromSlice(idleAgentIds))
+	// fmt.Printf("Supply agents =%v\n", supplyAgents)
 
 	demand := len(pendingJobs)
-	supply := len(idleAgents)
+	supply := supplyAgents.Size()
 	if demand > supply {
 		diff := demand - supply
 		config := s.config()
 		instancesToScaleUp := int(math.Ceil(float64(diff) / 2))
-		fmt.Printf("We need to invoke the Executor#ScaleUp for %d agents with Env=%v, Resources=%v\n", instancesToScaleUp, config.Env, config.Resources)
-		fmt.Printf("We need to invoke the Executor#ScaleUp for %d agents with Env=%v, Resources=%v\n", diff, config.Env, config.Resources)
-		executor.DefaultExecutor.ScaleUp(instancesToScaleUp)
+		fmt.Printf("Found demand with Env=%v, Resources=%v, scaling up by %d instances.\n", config.Env, config.Resources, instancesToScaleUp)
+		err = executor.DefaultExecutor.ScaleUp(instancesToScaleUp)
+		updateErrors(resultErr, err)
 	} else if supply > demand {
 		diff := supply - demand
 		config := s.config()
 		instancesToScaleDown := int(math.Ceil(float64(diff) / 2))
-		fmt.Printf("We need to invoke the Executor#ScaleDown for %d agents with Env=%v, Resources=%v\n", instancesToScaleDown, config.Env, config.Resources)
-		fmt.Printf("We need to invoke the Executor#ScaleDown for %d agents with Env=%v, Resources=%v\n", diff, config.Env, config.Resources)
-		executor.DefaultExecutor.ScaleDown(instancesToScaleDown)
+
+		if len(idleAgentIds) >= instancesToScaleDown {
+			fmt.Printf("Found excess supply for Env=%v, Resources=%v. Idle Agents is %d\n", config.Env, config.Resources, len(idleAgentIds))
+			agentsToKill := idleAgentIds[0:instancesToScaleDown]
+			err = executor.DefaultExecutor.ScaleDown(agentsToKill)
+			for _, agentID := range agentsToKill {
+				fmt.Printf("Disabling the agent %s on Go Server\n", agentID)
+				err = s.client().DisableAgent(agentID)
+				updateErrors(resultErr, err)
+				fmt.Printf("Deleting the agent %s on Go Server\n", agentID)
+				err = s.client().DeleteAgent(agentID)
+				updateErrors(resultErr, err)
+			}
+			updateErrors(resultErr, err)
+		}
 	} else {
 		fmt.Println("We're in Ideal world. Inner Peace.")
 	}
@@ -107,6 +128,14 @@ func (s *SimpleScalar) IdleAgents() ([]*gocd.Agent, error) {
 				filteredAgents = append(filteredAgents, agent)
 			}
 		}
+
+		return filteredAgents, nil
 	}
 	return []*gocd.Agent{}, err
+}
+
+func updateErrors(resultErr *multierror.Error, err error) {
+	if err != nil {
+		resultErr = multierror.Append(resultErr, err)
+	}
 }

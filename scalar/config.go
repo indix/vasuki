@@ -1,6 +1,6 @@
 package scalar
 
-import "github.com/deckarep/golang-set"
+import "github.com/ashwanthkumar/vasuki/utils/sets"
 
 // Config - Holds scalar configurations
 type Config struct {
@@ -17,19 +17,19 @@ func NewConfig(env []string, resources []string) *Config {
 }
 
 func (c *Config) match(jobEnv string, jobResources []string) bool {
-	env := mapset.NewSetFromSlice(stringSliceToInterfaceSlice(c.Env))
+	env := sets.FromSlice(c.Env)
 
-	allResources := mapset.NewSetFromSlice(stringSliceToInterfaceSlice(c.Resources))
-	requiredResources := mapset.NewSetFromSlice(stringSliceToInterfaceSlice(jobResources))
+	allResources := sets.FromSlice(c.Resources)
+	requiredResources := sets.FromSlice(jobResources)
 
-	return env.Contains(jobEnv) && allResources.IsSuperset(requiredResources)
+	return env.Contains(jobEnv) && allResources.IsSupersetOf(requiredResources)
 }
 
 func (c *Config) matchAgent(agentEnv []string, resources []string) bool {
-	env := mapset.NewSetFromSlice(stringSliceToInterfaceSlice(c.Env))
-	agentEnvSet := mapset.NewSetFromSlice(stringSliceToInterfaceSlice(agentEnv))
-	allResources := mapset.NewSetFromSlice(stringSliceToInterfaceSlice(c.Resources))
-	agentResource := mapset.NewSetFromSlice(stringSliceToInterfaceSlice(resources))
+	env := sets.FromSlice(c.Env)
+	agentEnvSet := sets.FromSlice(agentEnv)
+	allResources := sets.FromSlice(c.Resources)
+	agentResource := sets.FromSlice(resources)
 
 	return env.Equal(agentEnvSet) && allResources.Equal(agentResource)
 }

@@ -14,7 +14,11 @@ type Config struct {
 type Executor interface {
 	Init(config *Config) error
 	ScaleUp(instances int) error
-	ScaleDown(instances int) error
+	// currentAgents - List of UUIDs of the *idle agents* we know as of now
+	ScaleDown(agentsToKill []string) error
+	// Agents that are managed by this Executor instance.
+	ManagedAgents() ([]string, error)
 }
 
+// DefaultExecutor instance available across the app
 var DefaultExecutor Executor
