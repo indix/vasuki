@@ -89,8 +89,8 @@ func init() {
 	// GoCD Server related flags
 	vasukiCommand.PersistentFlags().StringVar(&goServerHost, "server-host", "localhost", "Go Server Domain / IP Address")
 	vasukiCommand.PersistentFlags().IntVar(&goServerPort, "server-port", 8153, "Go Server Port")
-	vasukiCommand.PersistentFlags().StringVar(&username, "server-username", "admin", "Username to connect to Go Server")
-	vasukiCommand.PersistentFlags().StringVar(&password, "server-password", "badger", "Password of the User to connect to Go Server")
+	vasukiCommand.PersistentFlags().StringVar(&username, "server-username", "", "Username to connect to Go Server")
+	vasukiCommand.PersistentFlags().StringVar(&password, "server-password", "", "Password of the User to connect to Go Server")
 	vasukiCommand.PersistentFlags().DurationVar(&pollInterval, "server-poll-interval", 30*time.Second, "Poll interval for new scheduled jobs")
 
 	// docker related flags
