@@ -22,10 +22,12 @@ setup:
 	go get github.com/hashicorp/go-multierror
 	go get github.com/deckarep/golang-set
 	go get github.com/fsouza/go-dockerclient
+	go get github.com/satori/go.uuid
 	# Test deps
 	go get github.com/stretchr/testify
 
 test:
+	go test -v github.com/ashwanthkumar/vasuki/utils/sets
 	go test -v github.com/ashwanthkumar/vasuki/scalar
 	go test -v github.com/ashwanthkumar/vasuki
 
