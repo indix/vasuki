@@ -9,7 +9,7 @@ You can run as many Vasuki instances in a machine for various environments / res
 ## Usage
 ```bash
 $ vasuki \
-  --server-host build.indix.tv \
+  --server-host localhost \
   --server-port 8080 \
   --server-username admin \
   --server-password badger \
