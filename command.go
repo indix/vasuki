@@ -7,6 +7,8 @@ import (
 	"time"
 
 	"github.com/ashwanthkumar/go-gocd"
+	"github.com/ashwanthkumar/vasuki/executor"
+	_ "github.com/ashwanthkumar/vasuki/executor/docker"
 	"github.com/ashwanthkumar/vasuki/scalar"
 	"github.com/spf13/cobra"
 )
@@ -28,7 +30,26 @@ var vasukiCommand = &cobra.Command{
 	Long:  `Scale GoCD Agents on demand`,
 	Run: func(cmd *cobra.Command, args []string) {
 		ServerHost := fmt.Sprintf("http://%s:%d", goServerHost, goServerPort)
-		scalar := scalar.NewSimpleScalar(env, resources, gocd.New(ServerHost, username, password))
+
+		executorAdditionalConfig := make(map[string]string)
+		executorAdditionalConfig["DOCKER_IMAGE"] = dockerImage
+		executorAdditionalConfig["DOCKER_ENDPOINT"] = dockerEndpoint
+
+		executorConfig := &executor.Config{
+			ServerHost:      goServerHost,
+			ServerPort:      goServerPort,
+			AutoRegisterKey: autoRegisterKey,
+			Env:             env,
+			Resources:       resources,
+			Additional:      executorAdditionalConfig,
+		}
+		executor.DefaultExecutor.Init(executorConfig)
+
+		scalar, err := scalar.NewSimpleScalar(env, resources, gocd.New(ServerHost, username, password))
+		if err != nil {
+			handleError(cmd, err)
+		}
+
 		doWork(scalar, cmd)
 		c := time.Tick(30 * time.Second)
 		for {
@@ -40,8 +61,12 @@ var vasukiCommand = &cobra.Command{
 	},
 }
 
-func doWork(scalar *scalar.SimpleScalar, cmd *cobra.Command) {
+func doWork(scalar scalar.Scalar, cmd *cobra.Command) {
 	err := scalar.Execute()
+	handleError(cmd, err)
+}
+
+func handleError(cmd *cobra.Command, err error) {
 	if err != nil {
 		log.Printf("[Error] %s", err.Error())
 		cmd.Help()
