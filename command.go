@@ -15,14 +15,18 @@ import (
 
 var goServerPort int
 var goServerHost string
+var pollInterval time.Duration
 var env []string
 var resources []string
 var maxAgents int
 var autoRegisterKey string
 var username string
 var password string
+
+// docker settings
 var dockerImage string
 var dockerEndpoint string
+var dockerSettingsFromEnv bool
 
 var vasukiCommand = &cobra.Command{
 	Use:   "vasuki",
@@ -34,6 +38,7 @@ var vasukiCommand = &cobra.Command{
 		executorAdditionalConfig := make(map[string]string)
 		executorAdditionalConfig["DOCKER_IMAGE"] = dockerImage
 		executorAdditionalConfig["DOCKER_ENDPOINT"] = dockerEndpoint
+		executorAdditionalConfig["DOCKER_FROM_ENV"] = fmt.Sprintf("%t", dockerSettingsFromEnv)
 
 		executorConfig := &executor.Config{
 			ServerHost:      goServerHost,
@@ -51,7 +56,7 @@ var vasukiCommand = &cobra.Command{
 		}
 
 		doWork(scalar, cmd)
-		c := time.Tick(30 * time.Second)
+		c := time.Tick(pollInterval)
 		for {
 			select {
 			case <-c:
@@ -86,8 +91,10 @@ func init() {
 	vasukiCommand.PersistentFlags().IntVar(&goServerPort, "server-port", 8153, "Go Server Port")
 	vasukiCommand.PersistentFlags().StringVar(&username, "server-username", "admin", "Username to connect to Go Server")
 	vasukiCommand.PersistentFlags().StringVar(&password, "server-password", "badger", "Password of the User to connect to Go Server")
+	vasukiCommand.PersistentFlags().DurationVar(&pollInterval, "server-poll-interval", 30*time.Second, "Poll interval for new scheduled jobs")
 
 	// docker related flags
 	vasukiCommand.PersistentFlags().StringVar(&dockerImage, "docker-image", "ashwanthkumar/gocd-agent", "Docker image used for spinning up the agent")
 	vasukiCommand.PersistentFlags().StringVar(&dockerEndpoint, "docker-endpoint", "unix:///var/run/docker.sock", "Docker endpoint to connect to")
+	vasukiCommand.PersistentFlags().BoolVar(&dockerSettingsFromEnv, "docker-env", false, "Flag to pick up docker settings from Env. Useful when working with boot2docker / docker-machine")
 }
