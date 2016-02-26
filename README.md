@@ -1,6 +1,6 @@
 # Vasuki
 
-Vasuki is a [GoCD](http://go.cd/) Agent autoscalar. It uses docker to bring up agents on demand and scale them back down. In GoCD you generally specify Environments and Resource tags to agents and GoCD Server then takes care of assigning each job to the agents that match the given criteria. With the advent of docker all these can be heavily simplified.
+Vasuki is a [GoCD](http://go.cd/) agent autoscaler. It uses docker to bring up agents on demand and scale them back down. In GoCD you generally specify Environments and Resource tags to agents and GoCD Server then takes care of assigning each job to the agents that match the given criteria. With the advent of docker all these can be heavily simplified.
 
 You just have to launch a Vasuki instance for an environment and resources with a docker image. It would periodically poll the GoCD Server for any active jobs waiting in Queue for these resources. If found, it would bring up agents (docker containers) matching the environment and resources.
 
