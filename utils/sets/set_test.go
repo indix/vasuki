@@ -70,3 +70,16 @@ func TestSetIntersect(t *testing.T) {
 	assert.Equal(t, 1, intersect.Size())
 	assert.True(t, intersect.Contains("foo"))
 }
+
+func TestSetIsSuperSetOf(t *testing.T) {
+	set1 := FromSlice([]string{
+		"foo", "bar", "baz",
+	})
+
+	set2 := FromSlice([]string{
+		"foo", "baz",
+	})
+
+	assert.True(t, set1.IsSupersetOf(set2))
+	assert.True(t, set1.IsSupersetOf(Empty())) // ø is a subset of everything
+}
