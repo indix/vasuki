@@ -38,29 +38,34 @@ func (e *Executor) ScaleUp(instances int) (err error) {
 	containerLabels["ENV"] = strings.Join(e.config.Env, ",")
 	containerLabels["RESOURCES"] = strings.Join(e.config.Resources, ",")
 	containerLabels["VASUKI_MANAGED"] = "true" // watermark to find the containers we spun
-	agentID := uuid.NewV4()
-	containerLabels["GO_AGENT_UUID"] = agentID.String()
+	var resultErr *multierror.Error
+	for count := 0; count < instances; count++ {
+		agentID := uuid.NewV4()
+		containerLabels["GO_AGENT_UUID"] = agentID.String()
 
-	config := &docker.Config{
-		Image: e.dockerImage,
-		Env: []string{
-			fmt.Sprintf("GO_SERVER=%s", e.config.ServerHost),
-			fmt.Sprintf("GO_SERVER_PORT=%d", e.config.ServerPort),
-			fmt.Sprintf("AGENT_ENVIRONMENTS=%s", strings.Join(e.config.Env, ",")),
-			fmt.Sprintf("AGENT_RESOURCES=%s", strings.Join(e.config.Resources, ",")),
-			fmt.Sprintf("AGENT_KEY=%s", e.config.AutoRegisterKey),
-			fmt.Sprintf("AGENT_GUID=%s", agentID),
-		},
-		Labels: containerLabels,
+		config := &docker.Config{
+			Image: e.dockerImage,
+			Env: []string{
+				fmt.Sprintf("GO_SERVER=%s", e.config.ServerHost),
+				fmt.Sprintf("GO_SERVER_PORT=%d", e.config.ServerPort),
+				fmt.Sprintf("AGENT_ENVIRONMENTS=%s", strings.Join(e.config.Env, ",")),
+				fmt.Sprintf("AGENT_RESOURCES=%s", strings.Join(e.config.Resources, ",")),
+				fmt.Sprintf("AGENT_KEY=%s", e.config.AutoRegisterKey),
+				fmt.Sprintf("AGENT_GUID=%s", agentID),
+			},
+			Labels: containerLabels,
+		}
+		opts := docker.CreateContainerOptions{
+			Config: config,
+		}
+		container, err := e.dockerClient.CreateContainer(opts)
+		resultErr = updateErrors(resultErr, err)
+		if err == nil {
+			err = e.dockerClient.StartContainer(container.ID, nil)
+			resultErr = updateErrors(resultErr, err)
+		}
 	}
-	opts := docker.CreateContainerOptions{
-		Config: config,
-	}
-	container, err := e.dockerClient.CreateContainer(opts)
-	if err != nil {
-		return err
-	}
-	err = e.dockerClient.StartContainer(container.ID, nil)
+
 	return err
 }
 
