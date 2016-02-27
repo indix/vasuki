@@ -49,8 +49,8 @@ Flags:
 ```
 
 ## How does Vasuki work?
-1. Query for [active](https://api.go.cd/current/#get-all-agents) / [queued](https://api.go.cd/current/#get-scheduled-jobs) builds. This is Demand.
-2. Query for all agents and list of containers managed by the executor implementation. We then take a union of both. This is Supply.
+1. Query for [active](https://api.go.cd/current/#get-all-agents) + [queued](https://api.go.cd/current/#get-scheduled-jobs) builds. This is Demand.
+2. Query for all active agents + list of containers managed by the executor implementation. We then take a union of both. This is Supply.
 3. If Demand > Supply, do scale up using the executor implementation
 4. If Demand < Supply, do scale down using the executor implementation
 
