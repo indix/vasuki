@@ -50,7 +50,8 @@ func (s *SimpleScalar) client() *gocd.Client {
 func (s *SimpleScalar) Execute() error {
 	var resultErr *multierror.Error
 	pendingJobs, err := s.ScheduledJobs() // demand
-	idleAgents, err := s.IdleAgents()     // supply - from GoCD Server
+	resultErr = updateErrors(resultErr, err)
+	idleAgents, err := s.IdleAgents() // supply - from GoCD Server
 	resultErr = updateErrors(resultErr, err)
 	executorReportedAgentIds, err := executor.DefaultExecutor.ManagedAgents() // supply - from Executor instance
 	resultErr = updateErrors(resultErr, err)
