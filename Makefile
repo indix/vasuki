@@ -23,6 +23,7 @@ setup:
 	go get github.com/deckarep/golang-set
 	go get github.com/fsouza/go-dockerclient
 	go get github.com/satori/go.uuid
+	go get github.com/op/go-logging
 	# Test deps
 	go get github.com/stretchr/testify
 

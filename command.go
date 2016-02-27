@@ -2,7 +2,6 @@ package main
 
 import (
 	"fmt"
-	"log"
 	"os"
 	"time"
 
@@ -10,6 +9,7 @@ import (
 	"github.com/ashwanthkumar/vasuki/executor"
 	_ "github.com/ashwanthkumar/vasuki/executor/docker"
 	"github.com/ashwanthkumar/vasuki/scalar"
+	"github.com/ashwanthkumar/vasuki/utils/logging"
 	"github.com/spf13/cobra"
 )
 
@@ -28,11 +28,16 @@ var dockerImage string
 var dockerEndpoint string
 var dockerSettingsFromEnv bool
 
+// misc
+var debug bool
+
 var vasukiCommand = &cobra.Command{
 	Use:   "vasuki",
 	Short: "Scale GoCD Agents on demand",
 	Long:  `Scale GoCD Agents on demand`,
 	Run: func(cmd *cobra.Command, args []string) {
+		logging.EnableDebug(debug)
+		logging.Log.Infof("Starting Vasuki instance with Env=%v, Resources=%v", env, resources)
 		ServerHost := fmt.Sprintf("http://%s:%d", goServerHost, goServerPort)
 
 		executorAdditionalConfig := make(map[string]string)
@@ -73,7 +78,7 @@ func doWork(scalar scalar.Scalar, cmd *cobra.Command) {
 
 func handleError(cmd *cobra.Command, err error) {
 	if err != nil {
-		log.Printf("[Error] %s", err.Error())
+		logging.Log.Criticalf("[Error] %s", err.Error())
 		os.Exit(1)
 	}
 }
@@ -96,4 +101,7 @@ func init() {
 	vasukiCommand.PersistentFlags().StringVar(&dockerImage, "docker-image", "ashwanthkumar/gocd-agent", "Docker image used for spinning up the agent")
 	vasukiCommand.PersistentFlags().StringVar(&dockerEndpoint, "docker-endpoint", "unix:///var/run/docker.sock", "Docker endpoint to connect to")
 	vasukiCommand.PersistentFlags().BoolVar(&dockerSettingsFromEnv, "docker-env", false, "Flag to pick up docker settings from Env. Useful when working with boot2docker / docker-machine")
+
+	// misc flags
+	vasukiCommand.PersistentFlags().BoolVar(&debug, "debug", false, "Enable debug logging")
 }

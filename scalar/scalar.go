@@ -1,11 +1,11 @@
 package scalar
 
 import (
-	"fmt"
 	"math"
 
 	"github.com/ashwanthkumar/go-gocd"
 	"github.com/ashwanthkumar/vasuki/executor"
+	"github.com/ashwanthkumar/vasuki/utils/logging"
 	"github.com/ashwanthkumar/vasuki/utils/sets"
 	"github.com/hashicorp/go-multierror"
 )
@@ -62,40 +62,47 @@ func (s *SimpleScalar) Execute() error {
 	for _, idleAgent := range idleAgents {
 		idleAgentIds = append(idleAgentIds, idleAgent.UUID)
 	}
-	// fmt.Printf("Idle Agents =%v\n", idleAgentIds)
+	// logging.Log.Debugf("Idle Agents =%v", idleAgentIds)
 	supplyAgents := sets.FromSlice(executorReportedAgentIds).Union(sets.FromSlice(idleAgentIds))
-	// fmt.Printf("Supply agents =%v\n", supplyAgents)
+	// logging.Log.Debugf("Supply agents =%v", supplyAgents)
 
 	demand := len(pendingJobs)
 	supply := supplyAgents.Size()
+	logging.Log.Debugf("Jobs in Queue (aka) Demand=%d", demand)
+	logging.Log.Debugf("Reporting Agents (aka) Supply=%d", supply)
 	if demand > supply {
 		diff := demand - supply
 		config := s.config()
 		instancesToScaleUp := int(math.Ceil(float64(diff) / 2))
-		fmt.Printf("Found demand with Env=%v, Resources=%v, scaling up by %d instances.\n", config.Env, config.Resources, instancesToScaleUp)
+		logging.Log.Infof("Found demand with Env=%v, Resources=%v, scaling up by %d instances.\n", config.Env, config.Resources, instancesToScaleUp)
 		err = executor.DefaultExecutor.ScaleUp(instancesToScaleUp)
 		resultErr = updateErrors(resultErr, err)
 	} else if supply > demand {
 		diff := supply - demand
 		config := s.config()
-		instancesToScaleDown := int(math.Ceil(float64(diff) / 2))
+		instancesToScaleDown := int(math.Min(math.Ceil(float64(diff)/2), float64(len(idleAgentIds))))
 
-		if len(idleAgentIds) >= instancesToScaleDown {
-			fmt.Printf("Found excess supply for Env=%v, Resources=%v. Idle Agents is %d\n", config.Env, config.Resources, len(idleAgentIds))
+		if len(idleAgentIds) > 0 {
+			logging.Log.Infof("Found excess supply for Env=%v, Resources=%v. # of Idle Agents = %d.", config.Env, config.Resources, len(idleAgentIds))
+			logging.Log.Infof("# of Agents Scaling down = %d", instancesToScaleDown)
 			agentsToKill := idleAgentIds[0:instancesToScaleDown]
 			for _, agentID := range agentsToKill {
-				fmt.Printf("Disabling the agent %s on Go Server\n", agentID)
+				logging.Log.Infof("Disabling the agent %s on Go Server\n", agentID)
 				err = s.client().DisableAgent(agentID)
 				resultErr = updateErrors(resultErr, err)
-				fmt.Printf("Deleting the agent %s on Go Server\n", agentID)
+				logging.Log.Infof("Deleting the agent %s on Go Server\n", agentID)
 				err = s.client().DeleteAgent(agentID)
 				resultErr = updateErrors(resultErr, err)
 			}
 			err = executor.DefaultExecutor.ScaleDown(agentsToKill)
 			resultErr = updateErrors(resultErr, err)
+		} else {
+			logging.Log.Infof("All agents are busy. Waiting for them to complete work.")
 		}
+	} else if supply == 0 && demand == 0 {
+		logging.Log.Info("No demand / supply was found.")
 	} else {
-		fmt.Println("We're in Ideal world. Inner Peace.")
+		logging.Log.Infof("Some agents are probably bootstrapping, waiting on.")
 	}
 
 	return resultErr.ErrorOrNil()

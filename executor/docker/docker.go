@@ -5,6 +5,7 @@ import (
 	"strings"
 
 	"github.com/ashwanthkumar/vasuki/executor"
+	"github.com/ashwanthkumar/vasuki/utils/logging"
 	"github.com/fsouza/go-dockerclient"
 	"github.com/hashicorp/go-multierror"
 	"github.com/satori/go.uuid"
@@ -32,7 +33,7 @@ func (e *Executor) Init(config *executor.Config) (err error) {
 
 // ScaleUp - Initiate a scaleUp activity among the agents that are managed by this executor instance
 func (e *Executor) ScaleUp(instances int) (err error) {
-	fmt.Printf("Scaling up %d agents via Docker\n", instances)
+	logging.Log.Infof("Scaling up %d agents via Docker", instances)
 	containerLabels := make(map[string]string, 0)
 	containerLabels["ENV"] = strings.Join(e.config.Env, ",")
 	containerLabels["RESOURCES"] = strings.Join(e.config.Resources, ",")
@@ -74,7 +75,7 @@ func (e *Executor) ScaleDown(agentsToKill []string) (err error) {
 				ID: *containerID,
 			}
 			err := e.dockerClient.KillContainer(opts)
-			fmt.Printf("Terminating agent %s created via Docker\n", agentID)
+			logging.Log.Infof("Terminating agent %s created via Docker", agentID)
 			resultErr = updateErrors(resultErr, err)
 		}
 	}
@@ -101,7 +102,6 @@ func (e *Executor) findContainerIDFor(agentID string) (*string, error) {
 	}
 
 	if resultErr.ErrorOrNil() != nil {
-		fmt.Printf("%s\n", resultErr.Error())
 		return nil, resultErr.ErrorOrNil()
 	}
 
