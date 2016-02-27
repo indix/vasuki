@@ -22,7 +22,12 @@ func (c *Config) match(jobEnv string, jobResources []string) bool {
 	allResources := sets.FromSlice(c.Resources)
 	requiredResources := sets.FromSlice(jobResources)
 
-	return env.Contains(jobEnv) && allResources.IsSupersetOf(requiredResources)
+	envMatch := true
+	if jobEnv != "" {
+		envMatch = env.Contains(jobEnv)
+	}
+
+	return envMatch && allResources.IsSupersetOf(requiredResources)
 }
 
 func (c *Config) matchAgent(agentEnv []string, resources []string) bool {
