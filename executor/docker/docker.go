@@ -51,7 +51,7 @@ func (e *Executor) ScaleUp(instances int) (err error) {
 				fmt.Sprintf("AGENT_ENVIRONMENTS=%s", strings.Join(e.config.Env, ",")),
 				fmt.Sprintf("AGENT_RESOURCES=%s", strings.Join(e.config.Resources, ",")),
 				fmt.Sprintf("AGENT_KEY=%s", e.config.AutoRegisterKey),
-				fmt.Sprintf("AGENT_GUID=%s", agentID),
+				fmt.Sprintf("AGENT_GUID=%s", agentID.String()),
 			},
 			Labels: containerLabels,
 		}
@@ -64,6 +64,7 @@ func (e *Executor) ScaleUp(instances int) (err error) {
 			err = e.dockerClient.StartContainer(container.ID, nil)
 			resultErr = updateErrors(resultErr, err)
 		}
+		logging.Log.Debugf("Started agent container %s", agentID.String())
 	}
 
 	return err
