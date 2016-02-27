@@ -94,4 +94,5 @@ func TestSetEqual(t *testing.T) {
 	})
 
 	assert.True(t, set1.Equal(set2))
+	assert.True(t, Empty().Equal(Empty()))
 }
