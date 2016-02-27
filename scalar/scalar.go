@@ -49,7 +49,9 @@ func (s *SimpleScalar) client() *gocd.Client {
 // Execute - Entry point of the Scalar
 func (s *SimpleScalar) Execute() error {
 	var resultErr *multierror.Error
-	pendingJobs, err := s.ScheduledJobs() // demand
+	pendingJobs, err := s.ScheduledJobs() // demand - from Job Queue
+	resultErr = updateErrors(resultErr, err)
+	buildingAgents, err := s.BuildingAgents() // demand - from from Agent Queu
 	resultErr = updateErrors(resultErr, err)
 	idleAgents, err := s.IdleAgents() // supply - from GoCD Server
 	resultErr = updateErrors(resultErr, err)
@@ -66,7 +68,7 @@ func (s *SimpleScalar) Execute() error {
 	supplyAgents := sets.FromSlice(executorReportedAgentIds).Union(sets.FromSlice(idleAgentIds))
 	// logging.Log.Debugf("Supply agents =%v", supplyAgents)
 
-	demand := len(pendingJobs)
+	demand := len(pendingJobs) + len(buildingAgents)
 	supply := supplyAgents.Size()
 	logging.Log.Debugf("Jobs in Queue (aka) Demand=%d", demand)
 	logging.Log.Debugf("Reporting Agents (aka) Supply=%d", supply)
@@ -90,9 +92,20 @@ func (s *SimpleScalar) Execute() error {
 				logging.Log.Infof("Disabling the agent %s on Go Server\n", agentID)
 				err = s.client().DisableAgent(agentID)
 				resultErr = updateErrors(resultErr, err)
-				logging.Log.Infof("Deleting the agent %s on Go Server\n", agentID)
-				err = s.client().DeleteAgent(agentID)
+				logging.Log.Debugf("Checking if the disabled agent %s has started building", agentID)
+				agent, err := s.client().GetAgent(agentID)
 				resultErr = updateErrors(resultErr, err)
+				if agent.BuildState != "Building" {
+					logging.Log.Debugf("Disabled agent %s is in %s build state so deleting it", agentID, agent.BuildState)
+					logging.Log.Infof("Deleting the agent %s on Go Server\n", agentID)
+					err = s.client().DeleteAgent(agentID)
+					resultErr = updateErrors(resultErr, err)
+				} else {
+					// Agent has started building after we disabled it, enabling it back
+					logging.Log.Noticef("Agent %s has started building after it was disabled, enabling it back", agentID)
+					err = s.client().EnableAgent(agentID)
+					resultErr = updateErrors(resultErr, err)
+				}
 			}
 			err = executor.DefaultExecutor.ScaleDown(agentsToKill)
 			resultErr = updateErrors(resultErr, err)
@@ -102,7 +115,14 @@ func (s *SimpleScalar) Execute() error {
 	} else if supply == 0 && demand == 0 {
 		logging.Log.Info("No demand / supply was found.")
 	} else {
-		logging.Log.Infof("Some agents are probably bootstrapping, waiting on.")
+		// When all the demand is scheduledJobs then upscaled agent's haven't registered with
+		// Go server yet. Happens when the time to bootstrap (downloading agent-launcher and agent-plugins)
+		// is more than our polling frequency
+		if len(pendingJobs) == demand {
+			logging.Log.Infof("Some agents are probably bootstrapping, waiting on.")
+		} else {
+			logging.Log.Infof("All agents are busy. Waiting for them to complete work.")
+		}
 	}
 
 	return resultErr.ErrorOrNil()
@@ -132,7 +152,27 @@ func (s *SimpleScalar) IdleAgents() ([]*gocd.Agent, error) {
 		filteredAgents := agents[:0]
 		for _, agent := range agents {
 			if config.matchAgent(agent.Env, agent.Resources) &&
-				(agent.BuildState == "Idle" || agent.BuildState == "Unknown") {
+				(agent.BuildState == "Idle" || agent.BuildState == "Unknown") &&
+				(agent.AgentState == "Idle" || agent.AgentState == "Unknown") {
+				filteredAgents = append(filteredAgents, agent)
+			}
+		}
+
+		return filteredAgents, nil
+	}
+	return []*gocd.Agent{}, err
+}
+
+// BuildingAgents - Get array of Agents that match our environment, resource combination
+func (s *SimpleScalar) BuildingAgents() ([]*gocd.Agent, error) {
+	config := s.config()
+	agents, err := s.client().GetAllAgents()
+	if err == nil {
+		filteredAgents := agents[:0]
+		for _, agent := range agents {
+			if config.matchAgent(agent.Env, agent.Resources) &&
+				(agent.BuildState == "Building") &&
+				(agent.AgentState == "Building") {
 				filteredAgents = append(filteredAgents, agent)
 			}
 		}
