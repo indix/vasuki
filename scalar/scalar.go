@@ -31,9 +31,11 @@ type SimpleScalar struct {
 }
 
 // NewSimpleScalar - Creates a new scalar.SimpleScalar instance
-func NewSimpleScalar(env []string, resources []string, client *gocd.Client) (Scalar, error) {
+func NewSimpleScalar(env []string, resources []string,
+	maxAgents int,
+	client *gocd.Client) (Scalar, error) {
 	return &SimpleScalar{
-		_config: NewConfig(env, resources),
+		_config: NewConfig(env, resources, maxAgents),
 		_client: client,
 	}, nil
 }
@@ -76,9 +78,16 @@ func (s *SimpleScalar) Execute() error {
 		diff := demand - supply
 		config := s.config()
 		instancesToScaleUp := int(math.Ceil(float64(diff) / 2))
-		logging.Log.Infof("Found demand with Env=%v, Resources=%v, scaling up by %d instances.\n", config.Env, config.Resources, instancesToScaleUp)
-		err = executor.DefaultExecutor.ScaleUp(instancesToScaleUp)
-		resultErr = updateErrors(resultErr, err)
+		if supply >= config.MaxAgents {
+			logging.Log.Infof("Found demand with Env=%v, Resources=%v, but we already have %d / %d max agents. Not scaling up.", config.Env, config.Resources, supply, config.MaxAgents)
+		} else {
+			if supply+instancesToScaleUp > config.MaxAgents {
+				instancesToScaleUp = config.MaxAgents - supply
+			}
+			logging.Log.Infof("Found demand with Env=%v, Resources=%v, scaling up by %d instances.\n", config.Env, config.Resources, instancesToScaleUp)
+			err = executor.DefaultExecutor.ScaleUp(instancesToScaleUp)
+			resultErr = updateErrors(resultErr, err)
+		}
 	} else if supply > demand {
 		diff := supply - demand
 		config := s.config()

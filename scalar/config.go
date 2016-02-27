@@ -6,13 +6,15 @@ import "github.com/ashwanthkumar/vasuki/utils/sets"
 type Config struct {
 	Env       []string
 	Resources []string
+	MaxAgents int
 }
 
 // NewConfig - Creates a new scalar.Config instance
-func NewConfig(env []string, resources []string) *Config {
+func NewConfig(env []string, resources []string, maxAgents int) *Config {
 	return &Config{
 		Env:       env,
 		Resources: resources,
+		MaxAgents: maxAgents,
 	}
 }
 

@@ -55,7 +55,7 @@ var vasukiCommand = &cobra.Command{
 		}
 		executor.DefaultExecutor.Init(executorConfig)
 
-		scalar, err := scalar.NewSimpleScalar(env, resources, gocd.New(ServerHost, username, password))
+		scalar, err := scalar.NewSimpleScalar(env, resources, maxAgents, gocd.New(ServerHost, username, password))
 		if err != nil {
 			handleError(cmd, err)
 		}
