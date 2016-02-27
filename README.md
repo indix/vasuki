@@ -48,6 +48,12 @@ Flags:
       --verbose                          Enable verbose logging
 ```
 
+## How does Vasuki work?
+1. Query for [active](https://api.go.cd/current/#get-all-agents) / [queued](https://api.go.cd/current/#get-scheduled-jobs) builds. This is Demand.
+2. Query for all agents and list of containers managed by the executor implementation. We then take a union of both. This is Supply.
+3. If Demand > Supply, do scale up using the executor implementation
+4. If Demand < Supply, do scale down using the executor implementation
+
 ## Known Issue
 When scaling down, there might a job which is stuck because it got assigned to an agent but Vasuki had just deleted it. This is because Vasuku doesn't get the latest status from [Agents Endpoint](https://api.go.cd/current/#get-all-agents) even after the agent is assigned a job. More details can be found on this [GoCD Dev mail list](https://groups.google.com/d/msg/go-cd-dev/tWmV0Rw9sJM/cz_qe4LcAQAJ) message.
 
