@@ -15,6 +15,7 @@ func TestConfigMatch(t *testing.T) {
 	assert.True(t, config.match("FT", []string{"FT"}))
 	assert.False(t, config.match("Production", []string{"Production"}))
 	assert.False(t, config.match("FT", []string{"Firefox"}))
+	assert.False(t, config.match("", []string{}))
 }
 
 func TestConfigMatchWhenNoEnvironmentOrResources(t *testing.T) {

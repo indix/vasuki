@@ -22,8 +22,12 @@ func (c *Config) match(jobEnv string, jobResources []string) bool {
 
 	requiredResources := sets.FromSlice(jobResources)
 
-	envMatch := true
-	if jobEnv != "" {
+	var envMatch bool
+
+	if jobEnv == "" {
+		// handle no environment job in a special way
+		envMatch = vasukiEnv.Size() == 0
+	} else {
 		envMatch = vasukiEnv.Contains(jobEnv)
 	}
 
