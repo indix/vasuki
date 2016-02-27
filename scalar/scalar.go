@@ -96,7 +96,7 @@ func (s *SimpleScalar) Execute() error {
 				agent, err := s.client().GetAgent(agentID)
 				resultErr = updateErrors(resultErr, err)
 				if agent.BuildState != "Building" {
-					logging.Log.Debugf("Disabled agent %s is in %s build state so deleting it", agentID, agent.BuildState)
+					logging.Log.Debugf("Disabled agent %s is in %s state so deleting it", agentID, agent.BuildState)
 					logging.Log.Infof("Deleting the agent %s on Go Server\n", agentID)
 					err = s.client().DeleteAgent(agentID)
 					resultErr = updateErrors(resultErr, err)
