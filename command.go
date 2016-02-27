@@ -29,14 +29,14 @@ var dockerEndpoint string
 var dockerSettingsFromEnv bool
 
 // misc
-var debug bool
+var verboseMode bool
 
 var vasukiCommand = &cobra.Command{
 	Use:   "vasuki",
 	Short: "Scale GoCD Agents on demand",
 	Long:  `Scale GoCD Agents on demand`,
 	Run: func(cmd *cobra.Command, args []string) {
-		logging.EnableDebug(debug)
+		logging.EnableDebug(verboseMode)
 		logging.Log.Infof("Starting Vasuki instance with Env=%v, Resources=%v", env, resources)
 		ServerHost := fmt.Sprintf("http://%s:%d", goServerHost, goServerPort)
 
@@ -103,5 +103,5 @@ func init() {
 	vasukiCommand.PersistentFlags().BoolVar(&dockerSettingsFromEnv, "docker-env", false, "Flag to pick up docker settings from Env. Useful when working with boot2docker / docker-machine")
 
 	// misc flags
-	vasukiCommand.PersistentFlags().BoolVar(&debug, "debug", false, "Enable debug logging")
+	vasukiCommand.PersistentFlags().BoolVar(&verboseMode, "verbose", false, "Enable verbose logging")
 }
