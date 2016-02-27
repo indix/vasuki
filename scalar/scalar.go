@@ -51,9 +51,9 @@ func (s *SimpleScalar) Execute() error {
 	var resultErr *multierror.Error
 	pendingJobs, err := s.ScheduledJobs() // demand
 	idleAgents, err := s.IdleAgents()     // supply - from GoCD Server
-	updateErrors(resultErr, err)
+	resultErr = updateErrors(resultErr, err)
 	executorReportedAgentIds, err := executor.DefaultExecutor.ManagedAgents() // supply - from Executor instance
-	updateErrors(resultErr, err)
+	resultErr = updateErrors(resultErr, err)
 	if resultErr.ErrorOrNil() != nil {
 		return resultErr.ErrorOrNil()
 	}
@@ -73,7 +73,7 @@ func (s *SimpleScalar) Execute() error {
 		instancesToScaleUp := int(math.Ceil(float64(diff) / 2))
 		fmt.Printf("Found demand with Env=%v, Resources=%v, scaling up by %d instances.\n", config.Env, config.Resources, instancesToScaleUp)
 		err = executor.DefaultExecutor.ScaleUp(instancesToScaleUp)
-		updateErrors(resultErr, err)
+		resultErr = updateErrors(resultErr, err)
 	} else if supply > demand {
 		diff := supply - demand
 		config := s.config()
@@ -85,13 +85,13 @@ func (s *SimpleScalar) Execute() error {
 			for _, agentID := range agentsToKill {
 				fmt.Printf("Disabling the agent %s on Go Server\n", agentID)
 				err = s.client().DisableAgent(agentID)
-				updateErrors(resultErr, err)
+				resultErr = updateErrors(resultErr, err)
 				fmt.Printf("Deleting the agent %s on Go Server\n", agentID)
 				err = s.client().DeleteAgent(agentID)
-				updateErrors(resultErr, err)
+				resultErr = updateErrors(resultErr, err)
 			}
 			err = executor.DefaultExecutor.ScaleDown(agentsToKill)
-			updateErrors(resultErr, err)
+			resultErr = updateErrors(resultErr, err)
 		}
 	} else {
 		fmt.Println("We're in Ideal world. Inner Peace.")
@@ -134,8 +134,10 @@ func (s *SimpleScalar) IdleAgents() ([]*gocd.Agent, error) {
 	return []*gocd.Agent{}, err
 }
 
-func updateErrors(resultErr *multierror.Error, err error) {
+func updateErrors(resultErr *multierror.Error, err error) *multierror.Error {
 	if err != nil {
 		resultErr = multierror.Append(resultErr, err)
 	}
+
+	return resultErr
 }

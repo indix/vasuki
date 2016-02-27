@@ -32,7 +32,6 @@ func (e *Executor) Init(config *executor.Config) (err error) {
 
 // ScaleUp - Initiate a scaleUp activity among the agents that are managed by this executor instance
 func (e *Executor) ScaleUp(instances int) (err error) {
-	// TODO - Implement scaling up
 	fmt.Printf("Scaling up %d agents via Docker\n", instances)
 	containerLabels := make(map[string]string, 0)
 	containerLabels["ENV"] = strings.Join(e.config.Env, ",")
@@ -69,14 +68,14 @@ func (e *Executor) ScaleDown(agentsToKill []string) (err error) {
 	var resultErr *multierror.Error
 	for _, agentID := range agentsToKill {
 		containerID, err := e.findContainerIDFor(agentID)
-		multierror.Append(resultErr, err)
+		resultErr = updateErrors(resultErr, err)
 		if err == nil {
 			opts := docker.KillContainerOptions{
 				ID: *containerID,
 			}
 			err := e.dockerClient.KillContainer(opts)
 			fmt.Printf("Terminating agent %s created via Docker\n", agentID)
-			multierror.Append(resultErr, err)
+			resultErr = updateErrors(resultErr, err)
 		}
 	}
 	return resultErr.ErrorOrNil()
@@ -95,14 +94,10 @@ func (e *Executor) findContainerIDFor(agentID string) (*string, error) {
 		Filters: containerFilters,
 	}
 	containers, err := e.dockerClient.ListContainers(opts)
-	if err != nil {
-		resultErr = multierror.Append(resultErr, err)
-	}
+	resultErr = updateErrors(resultErr, err)
 	if len(containers) < 1 {
 		err = fmt.Errorf("Container for agent id=%s not found", agentID)
-		if err != nil {
-			resultErr = multierror.Append(resultErr, err)
-		}
+		resultErr = updateErrors(resultErr, err)
 	}
 
 	if resultErr.ErrorOrNil() != nil {
@@ -134,4 +129,12 @@ func (e *Executor) ManagedAgents() ([]string, error) {
 
 func init() {
 	executor.DefaultExecutor = &Executor{}
+}
+
+func updateErrors(resultErr *multierror.Error, err error) *multierror.Error {
+	if err != nil {
+		resultErr = multierror.Append(resultErr, err)
+	}
+
+	return resultErr
 }
