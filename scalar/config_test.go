@@ -12,9 +12,9 @@ func TestConfigMatch(t *testing.T) {
 		Resources: []string{"FT"},
 	}
 
-	assert.Equal(t, true, config.match("FT", []string{"FT"}))
-	assert.Equal(t, false, config.match("Production", []string{"Production"}))
-	assert.Equal(t, false, config.match("FT", []string{"Firefox"}))
+	assert.True(t, config.match("FT", []string{"FT"}))
+	assert.False(t, config.match("Production", []string{"Production"}))
+	assert.False(t, config.match("FT", []string{"Firefox"}))
 }
 
 func TestConfigMatchWhenNoEnvironmentOrResources(t *testing.T) {
@@ -23,7 +23,7 @@ func TestConfigMatchWhenNoEnvironmentOrResources(t *testing.T) {
 		Resources: []string{},
 	}
 
-	assert.Equal(t, true, config.match("", []string{}))
+	assert.True(t, config.match("", []string{}))
 }
 
 func TestConfigMatchWhenOnlyNoEnvironment(t *testing.T) {
@@ -32,6 +32,58 @@ func TestConfigMatchWhenOnlyNoEnvironment(t *testing.T) {
 		Resources: []string{"packer", "terraform"},
 	}
 
-	assert.Equal(t, true, config.match("", []string{"packer"}))
-	assert.Equal(t, false, config.match("", []string{"docker"}))
+	assert.True(t, config.match("", []string{"packer"}))
+	assert.False(t, config.match("", []string{"docker"}))
+}
+
+func TestConfigAgentMatch(t *testing.T) {
+	config := Config{
+		Env:       []string{"FT", "Staging"},
+		Resources: []string{"FT"},
+	}
+
+	agentEnv := []string{"FT", "Staging"}
+	agentResources := []string{"FT"}
+
+	assert.True(t, config.matchAgent(agentEnv, agentResources))
+}
+
+func TestConfigAgentMatchWhenNoEnvironment(t *testing.T) {
+	config := Config{
+		Env:       []string{},
+		Resources: []string{"FT"},
+	}
+
+	agentEnv := []string{}
+	agentResources := []string{"FT"}
+
+	assert.True(t, config.matchAgent(agentEnv, agentResources))
+}
+
+func TestConfigAgentMatchWhenNoEnvironmentOrResource(t *testing.T) {
+	config := Config{
+		Env:       []string{},
+		Resources: []string{},
+	}
+
+	agentEnv := []string{}
+	agentResources := []string{}
+
+	assert.True(t, config.matchAgent(agentEnv, agentResources))
+}
+
+func TestConfigAgentMatchWhenOnlyEnvironment(t *testing.T) {
+	config := Config{
+		Env:       []string{"FT"},
+		Resources: []string{},
+	}
+
+	agentEnv := []string{"FT"}
+	agentResources := []string{}
+
+	assert.True(t, config.matchAgent(agentEnv, agentResources))
+
+	agentEnv = []string{"FT"}
+	agentResources = []string{"Staging"}
+	assert.False(t, config.matchAgent(agentEnv, agentResources))
 }

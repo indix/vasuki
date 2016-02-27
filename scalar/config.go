@@ -17,24 +17,24 @@ func NewConfig(env []string, resources []string) *Config {
 }
 
 func (c *Config) match(jobEnv string, jobResources []string) bool {
-	env := sets.FromSlice(c.Env)
+	vasukiEnv := sets.FromSlice(c.Env)
+	vasukiResource := sets.FromSlice(c.Resources)
 
-	allResources := sets.FromSlice(c.Resources)
 	requiredResources := sets.FromSlice(jobResources)
 
 	envMatch := true
 	if jobEnv != "" {
-		envMatch = env.Contains(jobEnv)
+		envMatch = vasukiEnv.Contains(jobEnv)
 	}
 
-	return envMatch && allResources.IsSupersetOf(requiredResources)
+	return envMatch && vasukiResource.IsSupersetOf(requiredResources)
 }
 
-func (c *Config) matchAgent(agentEnv []string, resources []string) bool {
-	env := sets.FromSlice(c.Env)
+func (c *Config) matchAgent(agentEnv []string, agentResource []string) bool {
+	vasukiEnv := sets.FromSlice(c.Env)
 	agentEnvSet := sets.FromSlice(agentEnv)
-	allResources := sets.FromSlice(c.Resources)
-	agentResource := sets.FromSlice(resources)
+	vasukiResource := sets.FromSlice(c.Resources)
+	agentResourceSet := sets.FromSlice(agentResource)
 
-	return env.Equal(agentEnvSet) && allResources.Equal(agentResource)
+	return vasukiEnv.Equal(agentEnvSet) && vasukiResource.Equal(agentResourceSet)
 }
