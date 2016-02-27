@@ -45,6 +45,7 @@ Flags:
       --server-poll-interval duration    Poll interval for new scheduled jobs (default 30s)
       --server-port int                  Go Server Port (default 8153)
       --server-username string           Username to connect to Go Server
+      --verbose                          Enable verbose logging
 ```
 
 ## FAQs
