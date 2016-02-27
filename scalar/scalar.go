@@ -82,7 +82,6 @@ func (s *SimpleScalar) Execute() error {
 		if len(idleAgentIds) >= instancesToScaleDown {
 			fmt.Printf("Found excess supply for Env=%v, Resources=%v. Idle Agents is %d\n", config.Env, config.Resources, len(idleAgentIds))
 			agentsToKill := idleAgentIds[0:instancesToScaleDown]
-			err = executor.DefaultExecutor.ScaleDown(agentsToKill)
 			for _, agentID := range agentsToKill {
 				fmt.Printf("Disabling the agent %s on Go Server\n", agentID)
 				err = s.client().DisableAgent(agentID)
@@ -91,6 +90,7 @@ func (s *SimpleScalar) Execute() error {
 				err = s.client().DeleteAgent(agentID)
 				updateErrors(resultErr, err)
 			}
+			err = executor.DefaultExecutor.ScaleDown(agentsToKill)
 			updateErrors(resultErr, err)
 		}
 	} else {
