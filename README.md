@@ -48,6 +48,13 @@ Flags:
       --verbose                          Enable verbose logging
 ```
 
+## Known Issue
+When scaling down, there might a job which is stuck because it got assigned to an agent but Vasuki had just deleted it. This is because Vasuku doesn't get the latest status from [Agents Endpoint](https://api.go.cd/current/#get-all-agents) even after the agent is assigned a job. More details can be found on this [GoCD Dev mail list](https://groups.google.com/d/msg/go-cd-dev/tWmV0Rw9sJM/cz_qe4LcAQAJ) message.
+
+Solution - Decrease the value of `cruise.reschedule.hung.builds.interval` property in GoCD server. This enables faster detection of hung jobs and reschedules them. Start your GoCD server with the following environment variable `GO_SERVER_SYSTEM_PROPERTIES="-Dcruise.reschedule.hung.builds.interval=60000"` (60 seconds).
+
+`cruise.reschedule.hung.builds.interval` by default is [5 minutes](https://github.com/gocd/gocd/blob/master/server/properties/src/cruise.properties#L26).
+
 ## FAQs
 ### Why my tasks take long to start now?
 Vasuki polls your GoCD server to find active jobs in queue matching these resources. Hence it's a factor of `--server-poll-interval` flag that you pass. Remember, if you choose a very low value, it'll create unnecessarily load on the server instance.
