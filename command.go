@@ -74,7 +74,6 @@ func doWork(scalar scalar.Scalar, cmd *cobra.Command) {
 func handleError(cmd *cobra.Command, err error) {
 	if err != nil {
 		log.Printf("[Error] %s", err.Error())
-		cmd.Help()
 		os.Exit(1)
 	}
 }
