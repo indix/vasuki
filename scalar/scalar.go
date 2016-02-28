@@ -22,6 +22,11 @@ type Scalar interface {
 	Demand() (int, error)
 	// Compute the supply of agents to GoCD Server
 	Supply() (int, error)
+
+	// Compute the number of agents to scale up given demand and supply
+	// ComputeScaleUp(demand int, supply int) (int, error)
+	// Compute the number of agents to scale down given demand and supply
+	// ComputeScaleDown(demand int, supply int, idleAgents int) (int, error)
 }
 
 // SimpleScalar implementation
@@ -76,10 +81,34 @@ func (s *SimpleScalar) Supply() (int, error) {
 	return supplyAgents.Size(), resultErr.ErrorOrNil()
 }
 
+// ComputeScaleUp number of agents given demand and supply
+func (s *SimpleScalar) ComputeScaleUp(demand int, supply int) (instances int, err error) {
+	diff := demand - supply
+	config := s.config()
+	instances = int(math.Ceil(float64(diff) / 2))
+	if supply >= config.MaxAgents {
+		instances = 0
+	} else if supply+instances > config.MaxAgents {
+		instances = config.MaxAgents - supply
+	}
+
+	return instances, err
+}
+
+func (s *SimpleScalar) ComputeScaleDown(demand int, supply int, idleAgents int) (instances int, err error) {
+	if idleAgents > 0 {
+		diff := demand - supply
+		instances = int(math.Min(math.Ceil(float64(diff)/2), float64(idleAgents)))
+		return instances, err
+	}
+	return 0, err
+}
+
 // Execute - Entry point of the Scalar
 func (s *SimpleScalar) Execute() error {
 	var resultErr *multierror.Error
 
+	config := s.config()
 	demand, err := s.Demand()
 	resultErr = updateErrors(resultErr, err)
 	supply, err := s.Supply()
@@ -91,27 +120,21 @@ func (s *SimpleScalar) Execute() error {
 	logging.Log.Debugf("Jobs in Queue (aka) Demand=%d", demand)
 	logging.Log.Debugf("Reporting Agents (aka) Supply=%d", supply)
 	if demand > supply {
-		diff := demand - supply
-		config := s.config()
-		instancesToScaleUp := int(math.Ceil(float64(diff) / 2))
-		if supply >= config.MaxAgents {
+		instancesToScaleUp, _ := s.ComputeScaleUp(demand, supply)
+		if instancesToScaleUp == 0 {
 			logging.Log.Infof("Found demand with Env=%v, Resources=%v, but we already have %d / %d max agents. Not scaling up.", config.Env, config.Resources, supply, config.MaxAgents)
 		} else {
-			if supply+instancesToScaleUp > config.MaxAgents {
-				instancesToScaleUp = config.MaxAgents - supply
-			}
 			logging.Log.Infof("Found demand with Env=%v, Resources=%v, scaling up by %d instances.\n", config.Env, config.Resources, instancesToScaleUp)
 			err = executor.DefaultExecutor.ScaleUp(instancesToScaleUp)
 			resultErr = updateErrors(resultErr, err)
 		}
 	} else if supply > demand {
-		diff := supply - demand
-		config := s.config()
 		idleAgentIds, err := s.IdleAgents()
-		instancesToScaleDown := int(math.Min(math.Ceil(float64(diff)/2), float64(len(idleAgentIds))))
+		idleAgents := len(idleAgentIds)
+		instancesToScaleDown, _ := s.ComputeScaleDown(demand, supply, idleAgents)
 
-		if len(idleAgentIds) > 0 {
-			logging.Log.Infof("Found excess supply for Env=%v, Resources=%v. # of Idle Agents = %d.", config.Env, config.Resources, len(idleAgentIds))
+		if instancesToScaleDown > 0 {
+			logging.Log.Infof("Found excess supply for Env=%v, Resources=%v. # of Idle Agents = %d.", config.Env, config.Resources, idleAgents)
 			logging.Log.Infof("# of Agents Scaling down = %d", instancesToScaleDown)
 			candidates := idleAgentIds[0:instancesToScaleDown]
 			var agentsToKill []string
