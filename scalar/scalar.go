@@ -15,7 +15,7 @@ type Scalar interface {
 	// Instance of the config for the Scalar
 	config() *Config
 	// Instance of the GoCD Client
-	client() *gocd.Client
+	client() gocd.Client
 	// Execute the Scalar
 	Execute() error
 	// Compute the demand of the GoCD sever
@@ -32,13 +32,13 @@ type Scalar interface {
 // SimpleScalar implementation
 type SimpleScalar struct {
 	_config *Config
-	_client *gocd.Client
+	_client gocd.Client
 }
 
 // NewSimpleScalar - Creates a new scalar.SimpleScalar instance
 func NewSimpleScalar(env []string, resources []string,
 	maxAgents int,
-	client *gocd.Client) (Scalar, error) {
+	client gocd.Client) (Scalar, error) {
 	return &SimpleScalar{
 		_config: NewConfig(env, resources, maxAgents),
 		_client: client,
@@ -49,7 +49,7 @@ func (s *SimpleScalar) config() *Config {
 	return s._config
 }
 
-func (s *SimpleScalar) client() *gocd.Client {
+func (s *SimpleScalar) client() gocd.Client {
 	return s._client
 }
 
