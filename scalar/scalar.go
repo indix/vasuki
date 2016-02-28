@@ -38,7 +38,7 @@ type SimpleScalar struct {
 // NewSimpleScalar - Creates a new scalar.SimpleScalar instance
 func NewSimpleScalar(env []string, resources []string,
 	maxAgents int,
-	client *gocd.Client) (Scalar, error) {
+	client *gocd.Client) (*SimpleScalar, error) {
 	return &SimpleScalar{
 		_config: NewConfig(env, resources, maxAgents),
 		_client: client,
