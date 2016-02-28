@@ -6,6 +6,7 @@ import (
 	"github.com/ashwanthkumar/go-gocd"
 	gocdmocks "github.com/ashwanthkumar/go-gocd/mocks"
 	"github.com/ashwanthkumar/vasuki/executor"
+	"github.com/ashwanthkumar/vasuki/utils/logging"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -14,6 +15,10 @@ var (
 	TestResources = []string{"TestResource"}
 	TestMaxAgents = 3
 )
+
+func init() {
+	logging.MuteLogs()
+}
 
 func TestComputeScaleUp(t *testing.T) {
 	scalar, err := NewSimpleScalar(TestEnv, TestResources, TestMaxAgents, nil)

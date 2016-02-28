@@ -1,6 +1,7 @@
 package logging
 
 import (
+	"io/ioutil"
 	"os"
 
 	"github.com/op/go-logging"
@@ -26,4 +27,9 @@ func EnableDebug(enable bool) {
 	if enable {
 		logging.SetLevel(logging.DEBUG, "")
 	}
+}
+
+// Used in tests
+func MuteLogs() {
+	logging.SetBackend(logging.NewLogBackend(ioutil.Discard, "", 0))
 }
