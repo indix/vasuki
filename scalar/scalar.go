@@ -18,10 +18,10 @@ type Scalar interface {
 	client() *gocd.Client
 	// Execute the Scalar
 	Execute() error
-	// ScheduledJobs matching the corresponding Env and Resources
-	ScheduledJobs() ([]*gocd.ScheduledJob, error)
-	// IdleAgents matching the corresponding Env and Resources
-	IdleAgents() ([]*gocd.Agent, error)
+	// Compute the demand of the GoCD sever
+	Demand() (int, error)
+	// Compute the supply of agents to GoCD Server
+	Supply() (int, error)
 }
 
 // SimpleScalar implementation
@@ -48,30 +48,46 @@ func (s *SimpleScalar) client() *gocd.Client {
 	return s._client
 }
 
-// Execute - Entry point of the Scalar
-func (s *SimpleScalar) Execute() error {
+// Demand in GoCD Server based on ScheduledJobs + Agents that're building
+func (s *SimpleScalar) Demand() (int, error) {
 	var resultErr *multierror.Error
 	pendingJobs, err := s.ScheduledJobs() // demand - from Job Queue
 	resultErr = updateErrors(resultErr, err)
 	buildingAgents, err := s.BuildingAgents() // demand - from from Agent Queu
 	resultErr = updateErrors(resultErr, err)
-	idleAgents, err := s.IdleAgents() // supply - from GoCD Server
+
+	demand := len(pendingJobs) + len(buildingAgents)
+	return demand, resultErr.ErrorOrNil()
+}
+
+// Supply in GoCD Server based on Idle agents + DefaultExecutor's ManagedAgents
+func (s *SimpleScalar) Supply() (int, error) {
+	var resultErr *multierror.Error
+	idleAgentIds, err := s.IdleAgents() // supply - from GoCD Server
 	resultErr = updateErrors(resultErr, err)
 	executorReportedAgentIds, err := executor.DefaultExecutor.ManagedAgents() // supply - from Executor instance
 	resultErr = updateErrors(resultErr, err)
 	if resultErr.ErrorOrNil() != nil {
+		return 0, resultErr.ErrorOrNil()
+	}
+
+	supplyAgents := sets.FromSlice(executorReportedAgentIds).Union(sets.FromSlice(idleAgentIds))
+
+	return supplyAgents.Size(), resultErr.ErrorOrNil()
+}
+
+// Execute - Entry point of the Scalar
+func (s *SimpleScalar) Execute() error {
+	var resultErr *multierror.Error
+
+	demand, err := s.Demand()
+	resultErr = updateErrors(resultErr, err)
+	supply, err := s.Supply()
+	resultErr = updateErrors(resultErr, err)
+	if resultErr.ErrorOrNil() != nil {
 		return resultErr.ErrorOrNil()
 	}
-	var idleAgentIds []string
-	for _, idleAgent := range idleAgents {
-		idleAgentIds = append(idleAgentIds, idleAgent.UUID)
-	}
-	// logging.Log.Debugf("Idle Agents =%v", idleAgentIds)
-	supplyAgents := sets.FromSlice(executorReportedAgentIds).Union(sets.FromSlice(idleAgentIds))
-	// logging.Log.Debugf("Supply agents =%v", supplyAgents)
 
-	demand := len(pendingJobs) + len(buildingAgents)
-	supply := supplyAgents.Size()
 	logging.Log.Debugf("Jobs in Queue (aka) Demand=%d", demand)
 	logging.Log.Debugf("Reporting Agents (aka) Supply=%d", supply)
 	if demand > supply {
@@ -91,6 +107,7 @@ func (s *SimpleScalar) Execute() error {
 	} else if supply > demand {
 		diff := supply - demand
 		config := s.config()
+		idleAgentIds, err := s.IdleAgents()
 		instancesToScaleDown := int(math.Min(math.Ceil(float64(diff)/2), float64(len(idleAgentIds))))
 
 		if len(idleAgentIds) > 0 {
@@ -127,11 +144,7 @@ func (s *SimpleScalar) Execute() error {
 		// When all the demand is scheduledJobs then upscaled agent's haven't registered with
 		// Go server yet. Happens when the time to bootstrap (downloading agent-launcher and agent-plugins)
 		// is more than our polling frequency
-		if len(pendingJobs) == demand {
-			logging.Log.Infof("Some agents are probably bootstrapping, waiting on.")
-		} else {
-			logging.Log.Infof("All agents are busy. Waiting for them to complete work.")
-		}
+		logging.Log.Infof("All agents are busy. Waiting for them to complete work.")
 	}
 
 	return resultErr.ErrorOrNil()
@@ -144,7 +157,7 @@ func (s *SimpleScalar) ScheduledJobs() ([]*gocd.ScheduledJob, error) {
 	if err == nil {
 		filteredJobs := jobs[:0]
 		for _, job := range jobs {
-			if config.match(job.Environment, job.Resources()) {
+			if config.matchJob(job.Environment, job.Resources()) {
 				filteredJobs = append(filteredJobs, job)
 			}
 		}
@@ -154,22 +167,22 @@ func (s *SimpleScalar) ScheduledJobs() ([]*gocd.ScheduledJob, error) {
 }
 
 // IdleAgents - Get array of Agents that match our environment, resource combination
-func (s *SimpleScalar) IdleAgents() ([]*gocd.Agent, error) {
+func (s *SimpleScalar) IdleAgents() ([]string, error) {
 	config := s.config()
 	agents, err := s.client().GetAllAgents()
+	var idleAgents []string
 	if err == nil {
-		filteredAgents := agents[:0]
 		for _, agent := range agents {
 			if config.matchAgent(agent.Env, agent.Resources) &&
 				(agent.BuildState == "Idle" || agent.BuildState == "Unknown") &&
 				(agent.AgentState == "Idle" || agent.AgentState == "Unknown") {
-				filteredAgents = append(filteredAgents, agent)
+				idleAgents = append(idleAgents, agent.UUID)
 			}
 		}
 
-		return filteredAgents, nil
+		return idleAgents, nil
 	}
-	return []*gocd.Agent{}, err
+	return idleAgents, err
 }
 
 // BuildingAgents - Get array of Agents that match our environment, resource combination
