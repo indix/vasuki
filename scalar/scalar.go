@@ -97,7 +97,7 @@ func (s *SimpleScalar) ComputeScaleUp(demand int, supply int) (instances int, er
 
 func (s *SimpleScalar) ComputeScaleDown(demand int, supply int, idleAgents int) (instances int, err error) {
 	if idleAgents > 0 {
-		diff := demand - supply
+		diff := supply - demand
 		instances = int(math.Min(math.Ceil(float64(diff)/2), float64(idleAgents)))
 		return instances, err
 	}
