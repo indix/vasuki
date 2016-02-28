@@ -1,3 +1,4 @@
+[![Build Status](https://snap-ci.com/ashwanthkumar/vasuki/branch/master/build_image)](https://snap-ci.com/ashwanthkumar/vasuki/branch/master)
 # Vasuki
 
 Vasuki is a [GoCD](http://go.cd/) agent autoscaler. It uses docker to bring up agents on demand and scale them back down. In GoCD you generally specify Environments and Resource tags to agents and GoCD Server then takes care of assigning each job to the agents that match the given criteria. With the advent of docker all these can be heavily simplified.
