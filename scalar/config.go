@@ -18,7 +18,7 @@ func NewConfig(env []string, resources []string, maxAgents int) *Config {
 	}
 }
 
-func (c *Config) match(jobEnv string, jobResources []string) bool {
+func (c *Config) matchJob(jobEnv string, jobResources []string) bool {
 	vasukiEnv := sets.FromSlice(c.Env)
 	vasukiResource := sets.FromSlice(c.Resources)
 

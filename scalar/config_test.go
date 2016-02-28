@@ -12,10 +12,10 @@ func TestConfigMatch(t *testing.T) {
 		Resources: []string{"FT"},
 	}
 
-	assert.True(t, config.match("FT", []string{"FT"}))
-	assert.False(t, config.match("Production", []string{"Production"}))
-	assert.False(t, config.match("FT", []string{"Firefox"}))
-	assert.False(t, config.match("", []string{}))
+	assert.True(t, config.matchJob("FT", []string{"FT"}))
+	assert.False(t, config.matchJob("Production", []string{"Production"}))
+	assert.False(t, config.matchJob("FT", []string{"Firefox"}))
+	assert.False(t, config.matchJob("", []string{}))
 }
 
 func TestConfigMatchWhenNoEnvironmentOrResources(t *testing.T) {
@@ -24,7 +24,7 @@ func TestConfigMatchWhenNoEnvironmentOrResources(t *testing.T) {
 		Resources: []string{},
 	}
 
-	assert.True(t, config.match("", []string{}))
+	assert.True(t, config.matchJob("", []string{}))
 }
 
 func TestConfigMatchWhenOnlyNoEnvironment(t *testing.T) {
@@ -33,8 +33,8 @@ func TestConfigMatchWhenOnlyNoEnvironment(t *testing.T) {
 		Resources: []string{"packer", "terraform"},
 	}
 
-	assert.True(t, config.match("", []string{"packer"}))
-	assert.False(t, config.match("", []string{"docker"}))
+	assert.True(t, config.matchJob("", []string{"packer"}))
+	assert.False(t, config.matchJob("", []string{"docker"}))
 }
 
 func TestConfigAgentMatch(t *testing.T) {
