@@ -24,9 +24,9 @@ type Scalar interface {
 	Supply() (int, error)
 
 	// Compute the number of agents to scale up given demand and supply
-	// ComputeScaleUp(demand int, supply int) (int, error)
+	ComputeScaleUp(demand int, supply int) (int, error)
 	// Compute the number of agents to scale down given demand and supply
-	// ComputeScaleDown(demand int, supply int, idleAgents int) (int, error)
+	ComputeScaleDown(demand int, supply int, idleAgents int) (int, error)
 }
 
 // SimpleScalar implementation
@@ -38,7 +38,7 @@ type SimpleScalar struct {
 // NewSimpleScalar - Creates a new scalar.SimpleScalar instance
 func NewSimpleScalar(env []string, resources []string,
 	maxAgents int,
-	client *gocd.Client) (*SimpleScalar, error) {
+	client *gocd.Client) (Scalar, error) {
 	return &SimpleScalar{
 		_config: NewConfig(env, resources, maxAgents),
 		_client: client,
