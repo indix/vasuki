@@ -26,6 +26,11 @@ setup:
 	go get github.com/op/go-logging
 	# Test deps
 	go get github.com/stretchr/testify
+	go get github.com/vektra/mockery/.../
+
+mocks:
+	mockery -name=Scalar -recursive -inpkg
+	mockery -name=Executor -recursive -inpkg
 
 test:
 	go test -v github.com/ashwanthkumar/vasuki/utils/sets

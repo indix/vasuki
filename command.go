@@ -71,8 +71,8 @@ var vasukiCommand = &cobra.Command{
 	},
 }
 
-func doWork(scalar scalar.Scalar, cmd *cobra.Command) {
-	err := scalar.Execute()
+func doWork(scalarImpl scalar.Scalar, cmd *cobra.Command) {
+	err := scalar.Execute(scalarImpl)
 	handleError(cmd, err)
 }
 

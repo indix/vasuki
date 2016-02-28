@@ -17,11 +17,13 @@ type Scalar interface {
 	// Instance of the GoCD Client
 	client() gocd.Client
 	// Execute the Scalar
-	Execute() error
+	// Execute() error
 	// Compute the demand of the GoCD sever
 	Demand() (int, error)
 	// Compute the supply of agents to GoCD Server
 	Supply() (int, error)
+
+	IdleAgents() ([]string, error)
 
 	// Compute the number of agents to scale up given demand and supply
 	ComputeScaleUp(demand int, supply int) (int, error)
@@ -106,7 +108,7 @@ func (s *SimpleScalar) ComputeScaleDown(demand int, supply int, idleAgents int) 
 }
 
 // Execute - Entry point of the Scalar
-func (s *SimpleScalar) Execute() error {
+func Execute(s Scalar) error {
 	var resultErr *multierror.Error
 
 	config := s.config()
@@ -159,8 +161,11 @@ func (s *SimpleScalar) Execute() error {
 					resultErr = updateErrors(resultErr, err)
 				}
 			}
-			err = executor.DefaultExecutor.ScaleDown(agentsToKill)
-			resultErr = updateErrors(resultErr, err)
+
+			if len(agentsToKill) > 0 {
+				err = executor.DefaultExecutor.ScaleDown(agentsToKill)
+				resultErr = updateErrors(resultErr, err)
+			}
 		} else {
 			logging.Log.Infof("All agents are busy. Waiting for them to complete work.")
 		}
