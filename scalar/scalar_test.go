@@ -29,3 +29,15 @@ func TestComputeScaleUp(t *testing.T) {
 	assert.Equal(t, 2, instances)
 	assert.Equal(t, TestMaxAgents, instances+1)
 }
+
+func TestComputeScaleDown(t *testing.T) {
+	scalar, err := NewSimpleScalar(TestEnv, TestResources, TestMaxAgents, nil)
+	assert.NoError(t, err)
+
+	instances, _ := scalar.ComputeScaleDown(0, 5, 1)
+	assert.Equal(t, 1, instances)
+	instances, _ = scalar.ComputeScaleDown(0, 5, 3)
+	assert.Equal(t, 3, instances)
+	instances, _ = scalar.ComputeScaleDown(0, 2, 2)
+	assert.Equal(t, 1, instances)
+}

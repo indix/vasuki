@@ -95,6 +95,7 @@ func (s *SimpleScalar) ComputeScaleUp(demand int, supply int) (instances int, er
 	return instances, err
 }
 
+// ComputeScaleDown number of agents given demand, supply and idleAgents
 func (s *SimpleScalar) ComputeScaleDown(demand int, supply int, idleAgents int) (instances int, err error) {
 	if idleAgents > 0 {
 		diff := supply - demand
