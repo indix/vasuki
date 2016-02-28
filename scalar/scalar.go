@@ -113,8 +113,9 @@ func (s *SimpleScalar) Execute() error {
 		if len(idleAgentIds) > 0 {
 			logging.Log.Infof("Found excess supply for Env=%v, Resources=%v. # of Idle Agents = %d.", config.Env, config.Resources, len(idleAgentIds))
 			logging.Log.Infof("# of Agents Scaling down = %d", instancesToScaleDown)
-			agentsToKill := idleAgentIds[0:instancesToScaleDown]
-			for _, agentID := range agentsToKill {
+			candidates := idleAgentIds[0:instancesToScaleDown]
+			var agentsToKill []string
+			for _, agentID := range candidates {
 				logging.Log.Infof("Disabling the agent %s on Go Server\n", agentID)
 				err = s.client().DisableAgent(agentID)
 				resultErr = updateErrors(resultErr, err)
@@ -126,6 +127,7 @@ func (s *SimpleScalar) Execute() error {
 					logging.Log.Infof("Deleting the agent %s on Go Server\n", agentID)
 					err = s.client().DeleteAgent(agentID)
 					resultErr = updateErrors(resultErr, err)
+					agentsToKill = append(agentsToKill, agentID)
 				} else {
 					// Agent has started building after we disabled it, enabling it back
 					logging.Log.Noticef("Agent %s has started building after it was disabled, enabling it back", agentID)
