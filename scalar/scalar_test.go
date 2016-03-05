@@ -5,8 +5,8 @@ import (
 
 	"github.com/ashwanthkumar/go-gocd"
 	gocdmocks "github.com/ashwanthkumar/go-gocd/mocks"
-	"github.com/ashwanthkumar/vasuki/executor"
-	"github.com/ashwanthkumar/vasuki/utils/logging"
+	"github.com/ind9/vasuki/executor"
+	"github.com/ind9/vasuki/utils/logging"
 	"github.com/stretchr/testify/assert"
 )
 

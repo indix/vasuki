@@ -6,10 +6,10 @@ import (
 	"time"
 
 	"github.com/ashwanthkumar/go-gocd"
-	"github.com/ashwanthkumar/vasuki/executor"
-	_ "github.com/ashwanthkumar/vasuki/executor/docker"
-	"github.com/ashwanthkumar/vasuki/scalar"
-	"github.com/ashwanthkumar/vasuki/utils/logging"
+	"github.com/ind9/vasuki/executor"
+	_ "github.com/ind9/vasuki/executor/docker"
+	"github.com/ind9/vasuki/scalar"
+	"github.com/ind9/vasuki/utils/logging"
 	"github.com/spf13/cobra"
 )
 

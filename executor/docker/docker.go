@@ -4,10 +4,10 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/ashwanthkumar/vasuki/executor"
-	"github.com/ashwanthkumar/vasuki/utils/logging"
 	"github.com/fsouza/go-dockerclient"
 	"github.com/hashicorp/go-multierror"
+	"github.com/ind9/vasuki/executor"
+	"github.com/ind9/vasuki/utils/logging"
 	"github.com/satori/go.uuid"
 )
 

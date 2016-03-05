@@ -4,10 +4,10 @@ import (
 	"math"
 
 	"github.com/ashwanthkumar/go-gocd"
-	"github.com/ashwanthkumar/vasuki/executor"
-	"github.com/ashwanthkumar/vasuki/utils/logging"
-	"github.com/ashwanthkumar/vasuki/utils/sets"
 	"github.com/hashicorp/go-multierror"
+	"github.com/ind9/vasuki/executor"
+	"github.com/ind9/vasuki/utils/logging"
+	"github.com/ind9/vasuki/utils/sets"
 )
 
 // Scalar - Wrapper that decides the agent resources for scaling up or down

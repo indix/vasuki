@@ -1,6 +1,6 @@
 package scalar
 
-import "github.com/ashwanthkumar/vasuki/utils/sets"
+import "github.com/ind9/vasuki/utils/sets"
 
 // Config - Holds scalar configurations
 type Config struct {
