@@ -33,9 +33,9 @@ mocks:
 	mockery -name=Executor -recursive -inpkg
 
 test:
-	go test -v github.com/ashwanthkumar/vasuki/utils/sets
-	go test -v github.com/ashwanthkumar/vasuki/scalar
-	go test -v github.com/ashwanthkumar/vasuki
+	go test -v github.com/ind9/vasuki/utils/sets
+	go test -v github.com/ind9/vasuki/scalar
+	go test -v github.com/ind9/vasuki
 
 install: build
 	sudo install -d /usr/local/bin
