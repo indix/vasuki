@@ -16,8 +16,6 @@ type Scalar interface {
 	config() *Config
 	// Instance of the GoCD Client
 	client() gocd.Client
-	// Execute the Scalar
-	// Execute() error
 	// Compute the demand of the GoCD sever
 	Demand() (int, error)
 	// Compute the supply of agents to GoCD Server
