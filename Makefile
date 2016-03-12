@@ -37,6 +37,9 @@ test:
 	go test -v github.com/ind9/vasuki/scalar
 	go test -v github.com/ind9/vasuki
 
+test-only:
+	go test -v github.com/ind9/vasuki/${name}
+
 install: build
 	sudo install -d /usr/local/bin
 	sudo install -c ${APPNAME} /usr/local/bin/${APPNAME}
