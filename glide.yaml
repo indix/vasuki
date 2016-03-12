@@ -1,0 +1,11 @@
+package: github.com/ind9/vasuki
+import:
+- package: github.com/ashwanthkumar/go-gocd
+- package: github.com/fsouza/go-dockerclient
+- package: github.com/hashicorp/go-multierror
+- package: github.com/op/go-logging
+- package: github.com/satori/go.uuid
+- package: github.com/spf13/cobra
+- package: github.com/stretchr/testify
+  subpackages:
+  - mock
