@@ -20,6 +20,8 @@ type Scalar interface {
 	Demand() (int, error)
 	// Compute the supply of agents to GoCD Server
 	Supply() (int, error)
+	// Executor instance to talk to
+	Executor() executor.Executor
 
 	IdleAgents() ([]string, error)
 
@@ -31,17 +33,20 @@ type Scalar interface {
 
 // SimpleScalar implementation
 type SimpleScalar struct {
-	_config *Config
-	_client gocd.Client
+	_config  *Config
+	_client  gocd.Client
+	executor executor.Executor
 }
 
 // NewSimpleScalar - Creates a new scalar.SimpleScalar instance
 func NewSimpleScalar(env []string, resources []string,
 	maxAgents int,
+	executor executor.Executor,
 	client gocd.Client) (Scalar, error) {
 	return &SimpleScalar{
-		_config: NewConfig(env, resources, maxAgents),
-		_client: client,
+		_config:  NewConfig(env, resources, maxAgents),
+		_client:  client,
+		executor: executor,
 	}, nil
 }
 
@@ -51,6 +56,10 @@ func (s *SimpleScalar) config() *Config {
 
 func (s *SimpleScalar) client() gocd.Client {
 	return s._client
+}
+
+func (s *SimpleScalar) Executor() executor.Executor {
+	return s.executor
 }
 
 // Demand in GoCD Server based on ScheduledJobs + Agents that're building
@@ -70,7 +79,7 @@ func (s *SimpleScalar) Supply() (int, error) {
 	var resultErr *multierror.Error
 	idleAgentIds, err := s.IdleAgents() // supply - from GoCD Server
 	resultErr = updateErrors(resultErr, err)
-	executorReportedAgentIds, err := executor.DefaultExecutor.ManagedAgents() // supply - from Executor instance
+	executorReportedAgentIds, err := s.executor.ManagedAgents() // supply - from Executor instance
 	resultErr = updateErrors(resultErr, err)
 	if resultErr.ErrorOrNil() != nil {
 		return 0, resultErr.ErrorOrNil()
@@ -126,7 +135,7 @@ func Execute(s Scalar) error {
 			logging.Log.Infof("Found demand with Env=%v, Resources=%v, but we already have %d / %d max agents. Not scaling up.", config.Env, config.Resources, supply, config.MaxAgents)
 		} else {
 			logging.Log.Infof("Found demand with Env=%v, Resources=%v, scaling up by %d instances.\n", config.Env, config.Resources, instancesToScaleUp)
-			err = executor.DefaultExecutor.ScaleUp(instancesToScaleUp)
+			err = s.Executor().ScaleUp(instancesToScaleUp)
 			resultErr = updateErrors(resultErr, err)
 		}
 	} else if supply > demand {
@@ -161,7 +170,7 @@ func Execute(s Scalar) error {
 			}
 
 			if len(agentsToKill) > 0 {
-				err = executor.DefaultExecutor.ScaleDown(agentsToKill)
+				err = s.Executor().ScaleDown(agentsToKill)
 				resultErr = updateErrors(resultErr, err)
 			}
 		} else {

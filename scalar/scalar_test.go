@@ -21,7 +21,8 @@ func init() {
 }
 
 func TestComputeScaleUp(t *testing.T) {
-	scalar, err := NewSimpleScalar(TestEnv, TestResources, TestMaxAgents, nil)
+	MockExecutor := new(executor.MockExecutor)
+	scalar, err := NewSimpleScalar(TestEnv, TestResources, TestMaxAgents, MockExecutor, nil)
 	assert.NoError(t, err)
 
 	instances, _ := scalar.ComputeScaleUp(5, 0)
@@ -39,7 +40,8 @@ func TestComputeScaleUp(t *testing.T) {
 }
 
 func TestComputeScaleDown(t *testing.T) {
-	scalar, err := NewSimpleScalar(TestEnv, TestResources, TestMaxAgents, nil)
+	MockExecutor := new(executor.MockExecutor)
+	scalar, err := NewSimpleScalar(TestEnv, TestResources, TestMaxAgents, MockExecutor, nil)
 	assert.NoError(t, err)
 
 	instances, _ := scalar.ComputeScaleDown(0, 5, 1)
@@ -51,13 +53,13 @@ func TestComputeScaleDown(t *testing.T) {
 }
 
 func TestExecuteForScaleUp(t *testing.T) {
-	mockExecutor := new(executor.MockExecutor)
-	executor.DefaultExecutor = mockExecutor
-	mockExecutor.On("ScaleUp", 1).Return(nil)
+	MockExecutor := new(executor.MockExecutor)
+	MockExecutor.On("ScaleUp", 1).Return(nil)
 
 	config := NewConfig([]string{"Test-Env"}, []string{"Test-Resource"}, 1)
 	scalar := new(MockScalar)
 	scalar.On("config").Return(config)
+	scalar.On("Executor").Return(MockExecutor)
 	scalar.On("Demand").Return(1, nil)
 	scalar.On("Supply").Return(0, nil)
 	scalar.On("ComputeScaleUp", 1, 0).Return(1, nil)
@@ -65,10 +67,11 @@ func TestExecuteForScaleUp(t *testing.T) {
 	Execute(scalar)
 
 	scalar.AssertExpectations(t)
-	mockExecutor.AssertExpectations(t)
+	MockExecutor.AssertExpectations(t)
 }
 
 func TestExecuteForScaleDown(t *testing.T) {
+	MockExecutor := new(executor.MockExecutor)
 	client := new(gocdmocks.Client)
 	client.On("DisableAgent", "kill-agent-id").Return(nil, nil)
 	client.On("DeleteAgent", "kill-agent-id").Return(nil, nil)
@@ -76,14 +79,13 @@ func TestExecuteForScaleDown(t *testing.T) {
 		BuildState: "Idle",
 	}
 	client.On("GetAgent", "kill-agent-id").Return(agentStatus, nil)
-	mockExecutor := new(executor.MockExecutor)
-	executor.DefaultExecutor = mockExecutor
-	mockExecutor.On("ScaleDown", []string{"kill-agent-id"}).Return(nil)
+	MockExecutor.On("ScaleDown", []string{"kill-agent-id"}).Return(nil)
 
 	config := NewConfig([]string{"Test-Env"}, []string{"Test-Resource"}, 1)
 	scalar := new(MockScalar)
 	scalar.On("config").Return(config)
 	scalar.On("client").Return(client)
+	scalar.On("Executor").Return(MockExecutor)
 	scalar.On("Demand").Return(0, nil)
 	scalar.On("Supply").Return(1, nil)
 	scalar.On("ComputeScaleDown", 0, 1, 1).Return(1, nil)
@@ -93,10 +95,11 @@ func TestExecuteForScaleDown(t *testing.T) {
 
 	client.AssertExpectations(t)
 	scalar.AssertExpectations(t)
-	mockExecutor.AssertExpectations(t)
+	MockExecutor.AssertExpectations(t)
 }
 
 func TestSkipScaleDownIfAgentFoundBuildingAfterDisabling(t *testing.T) {
+	MockExecutor := new(executor.MockExecutor)
 	client := new(gocdmocks.Client)
 	client.On("DisableAgent", "kill-agent-id").Return(nil, nil)
 	client.On("EnableAgent", "kill-agent-id").Return(nil, nil)
@@ -104,8 +107,6 @@ func TestSkipScaleDownIfAgentFoundBuildingAfterDisabling(t *testing.T) {
 		BuildState: "Building",
 	}
 	client.On("GetAgent", "kill-agent-id").Return(agentStatus, nil)
-	mockExecutor := new(executor.MockExecutor)
-	executor.DefaultExecutor = mockExecutor
 
 	config := NewConfig([]string{"Test-Env"}, []string{"Test-Resource"}, 1)
 	scalar := new(MockScalar)
@@ -120,7 +121,7 @@ func TestSkipScaleDownIfAgentFoundBuildingAfterDisabling(t *testing.T) {
 
 	client.AssertExpectations(t)
 	scalar.AssertExpectations(t)
-	mockExecutor.AssertExpectations(t)
-	mockExecutor.AssertNotCalled(t, "ScaleDown", []string{"kill-agent-id"})
+	MockExecutor.AssertExpectations(t)
+	MockExecutor.AssertNotCalled(t, "ScaleDown", []string{"kill-agent-id"})
 	client.AssertNotCalled(t, "DeleteAgent", "kill-agent-id")
 }

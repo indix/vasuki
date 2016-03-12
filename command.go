@@ -23,6 +23,8 @@ var autoRegisterKey string
 var username string
 var password string
 
+var executorDriver string
+
 // docker settings
 var dockerImage string
 var dockerEndpoint string
@@ -53,9 +55,13 @@ var vasukiCommand = &cobra.Command{
 			Resources:       resources,
 			Additional:      executorAdditionalConfig,
 		}
-		executor.DefaultExecutor.Init(executorConfig)
+		executor, present := executor.Executors[executorDriver]
+		if !present {
+			handleError(cmd, fmt.Errorf("%s executor is not found", executorDriver))
+		}
+		executor.Init(executorConfig)
 
-		scalar, err := scalar.NewSimpleScalar(env, resources, maxAgents, gocd.New(ServerHost, username, password))
+		scalar, err := scalar.NewSimpleScalar(env, resources, maxAgents, executor, gocd.New(ServerHost, username, password))
 		if err != nil {
 			handleError(cmd, err)
 		}
@@ -96,6 +102,9 @@ func init() {
 	vasukiCommand.PersistentFlags().StringVar(&username, "server-username", "", "Username to connect to Go Server")
 	vasukiCommand.PersistentFlags().StringVar(&password, "server-password", "", "Password of the User to connect to Go Server")
 	vasukiCommand.PersistentFlags().DurationVar(&pollInterval, "server-poll-interval", 30*time.Second, "Poll interval for new scheduled jobs")
+
+	// executor related flags
+	vasukiCommand.PersistentFlags().StringVar(&executorDriver, "executor-driver", "docker", "Executor driver to use")
 
 	// docker related flags
 	vasukiCommand.PersistentFlags().StringVar(&dockerImage, "docker-image", "ashwanthkumar/gocd-agent", "Docker image used for spinning up the agent")

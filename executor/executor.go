@@ -20,5 +20,8 @@ type Executor interface {
 	ManagedAgents() ([]string, error)
 }
 
-// DefaultExecutor instance available across the app
-var DefaultExecutor Executor
+var Executors map[string]Executor
+
+func init() {
+	Executors = make(map[string]Executor)
+}

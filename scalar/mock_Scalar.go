@@ -4,6 +4,8 @@ import "github.com/stretchr/testify/mock"
 
 import "github.com/ashwanthkumar/go-gocd"
 
+import "github.com/ind9/vasuki/executor"
+
 type MockScalar struct {
 	mock.Mock
 }
@@ -78,6 +80,20 @@ func (_m *MockScalar) Supply() (int, error) {
 	}
 
 	return r0, r1
+}
+
+// Executor provides a mock function with given fields:
+func (_m *MockScalar) Executor() executor.Executor {
+	ret := _m.Called()
+
+	var r0 executor.Executor
+	if rf, ok := ret.Get(0).(func() executor.Executor); ok {
+		r0 = rf()
+	} else {
+		r0 = ret.Get(0).(executor.Executor)
+	}
+
+	return r0
 }
 
 // IdleAgents provides a mock function with given fields:

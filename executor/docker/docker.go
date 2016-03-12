@@ -134,7 +134,7 @@ func (e *Executor) ManagedAgents() ([]string, error) {
 }
 
 func init() {
-	executor.DefaultExecutor = &Executor{}
+	executor.Executors["docker"] = &Executor{}
 }
 
 func updateErrors(resultErr *multierror.Error, err error) *multierror.Error {
