@@ -67,7 +67,7 @@ When scaling down, there might a job which is stuck because it got assigned to a
 Vasuki polls your GoCD server to find active jobs in queue matching these resources. Hence it's a factor of `--server-poll-interval` flag that you pass. Remember, if you choose a very low value, it'll create unnecessarily load on the server instance.
 
 ### For multiple environments and resources should I launch multiple Vasuki instances?
-Yes and No. A single Vasuki can manage multiple environments and resources, but currently only 1 docker image per instance. So if you've 2 environments (say FT and UAT) and both are identical with respect to Go Agent, then yes a single Vasuki instance would be fine. Else you might want to launch a separate instance for each environment.
+Yes and No. A single Vasuki can manage multiple environments and resources, but currently only 1 docker image per instance. So if you've 2 environments (say FT and UAT) and both are identical with respect to Go Agent, then yes a single Vasuki instance would be fine. Else you might want to launch a separate vasuki instance for each environment.
 
 ## License
 http://www.apache.org/licenses/LICENSE-2.0
