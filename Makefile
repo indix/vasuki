@@ -1,5 +1,7 @@
 APPNAME = vasuki
-VERSION=0.1.0-dev
+VERSION = 0.1.0-dev
+
+build-all: build-mac build-linux
 
 build:
 	go build -o ${APPNAME} .
@@ -10,9 +12,13 @@ build-linux:
 build-mac:
 	GOOS=darwin GOARCH=amd64 go build -ldflags "-s -X main.Version=${VERSION}" -v -o ${APPNAME}-darwin-amd64 .
 
-build-all: build-mac build-linux
+clean:
+	rm -f ${APPNAME}
+	rm -f ${APPNAME}-linux-amd64
+	rm -f ${APPNAME}-darwin-amd64
 
-all: setup
+all:
+	setup
 	build
 	install
 
