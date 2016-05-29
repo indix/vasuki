@@ -62,7 +62,7 @@ func (s *SimpleScalar) Executor() executor.Executor {
 	return s.executor
 }
 
-// Demand in GoCD Server based on ScheduledJobs + Agents that're building
+// Demand in GoCD Server = ScheduledJobs + Agents that're building
 func (s *SimpleScalar) Demand() (int, error) {
 	var resultErr *multierror.Error
 	pendingJobs, err := s.ScheduledJobs() // demand - from Job Queue
@@ -74,7 +74,7 @@ func (s *SimpleScalar) Demand() (int, error) {
 	return demand, resultErr.ErrorOrNil()
 }
 
-// Supply in GoCD Server based on Idle agents + DefaultExecutor's ManagedAgents
+// Supply in GoCD Server based on union of Idle agents + DefaultExecutor's ManagedAgents
 func (s *SimpleScalar) Supply() (int, error) {
 	var resultErr *multierror.Error
 	idleAgentIds, err := s.IdleAgents() // supply - from GoCD Server
@@ -106,7 +106,7 @@ func (s *SimpleScalar) ComputeScaleUp(demand int, supply int) (instances int, er
 
 // ComputeScaleDown number of agents given demand, supply and idleAgents
 func (s *SimpleScalar) ComputeScaleDown(demand int, supply int, idleAgents int) (instances int, err error) {
-	if idleAgents > 0 {
+	if idleAgents > 1 {
 		diff := supply - demand
 		instances = int(math.Min(math.Ceil(float64(diff)/2), float64(idleAgents)))
 		return instances, err

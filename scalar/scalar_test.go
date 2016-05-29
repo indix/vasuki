@@ -44,8 +44,9 @@ func TestComputeScaleDown(t *testing.T) {
 	scalar, err := NewSimpleScalar(TestEnv, TestResources, TestMaxAgents, MockExecutor, nil)
 	assert.NoError(t, err)
 
+	// Always have atleast 1 agent running
 	instances, _ := scalar.ComputeScaleDown(0, 5, 1)
-	assert.Equal(t, 1, instances)
+	assert.Equal(t, 0, instances)
 	instances, _ = scalar.ComputeScaleDown(0, 5, 3)
 	assert.Equal(t, 3, instances)
 	instances, _ = scalar.ComputeScaleDown(0, 2, 2)
