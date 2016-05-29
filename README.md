@@ -5,13 +5,14 @@ Vasuki is a [GoCD](http://go.cd/) agent autoscaler. Currently it uses docker to 
 
 You just have to launch a Vasuki instance for an environment and resources with a docker image. It would periodically poll the GoCD Server for any active jobs waiting in Queue with these constraints. If found, it would bring up agents (docker containers) injecting the necessary environment and resource information. Once found idle, it would kill the container and remove the agent from the server.
 
-You can run as many Vasuki instances in a machine for various environments / resources.
+You can run as many Vasuki instances in a machine for various environment and resource combinations.
 
 ## Features
 - Auto scale GoCD environments with resources automatically on demand
 - Completely stateless, preferred deployment is to start it as a deamon and put it behind a monit like process watch.
 
 ## Usage
+### Simple Example
 ```bash
 $ vasuki \
   --server-host localhost \
@@ -41,6 +42,7 @@ Flags:
       --docker-endpoint string           Docker endpoint to connect to (default "unix:///var/run/docker.sock")
       --docker-env                       Flag to pick up docker settings from Env. Useful when working with boot2docker / docker-machine
       --docker-image string              Docker image used for spinning up the agent (default "ashwanthkumar/gocd-agent")
+      --executor-driver string           Executor driver to use (default "docker")
       --server-host string               Go Server Domain / IP Address (default "localhost")
       --server-password string           Password of the User to connect to Go Server
       --server-poll-interval duration    Poll interval for new scheduled jobs (default 30s)
@@ -50,10 +52,11 @@ Flags:
 ```
 
 ## How does Vasuki work?
-1. Query for [active](https://api.go.cd/current/#get-all-agents) + [queued](https://api.go.cd/current/#get-scheduled-jobs) builds. This is Demand.
-2. Query for all active agents + list of containers managed by the executor implementation. We then take a union of both. This is Supply.
+1. Query for [active](https://api.go.cd/current/#get-all-agents) + [queued](https://api.go.cd/current/#get-scheduled-jobs) builds. This is **Demand**.
+2. Query for all active agents + list of agents managed by the executor implementation. We then take a union of both. This is **Supply**.
 3. If Demand > Supply, do scale up using the executor implementation
 4. If Demand < Supply, do scale down using the executor implementation
+5. Otherwise, do nothing.
 
 ## Known Issue
 When scaling down, there might a job which is stuck because it got assigned to an agent but Vasuki had just deleted that agent. This is because Vasuku doesn't get the latest status from [Agents Endpoint](https://api.go.cd/current/#get-all-agents) even after the agent is assigned a job. More details can be found on this [GoCD Dev mail list](https://groups.google.com/d/msg/go-cd-dev/tWmV0Rw9sJM/cz_qe4LcAQAJ) message.
