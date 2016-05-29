@@ -51,6 +51,32 @@ Flags:
       --verbose                          Enable verbose logging
 ```
 
+## Building
+
+Dependencies are managed with [glide](https://github.com/Masterminds/glide).
+
+- [Install](https://github.com/Masterminds/glide#install) glide.
+
+- The vendor support in Go 1.5 is opt-in. To enable it you need to set the environment variable:
+
+```
+λ export GO15VENDOREXPERIMENT=1
+```
+
+- Clone this repository inside your `${GOPATH}/src`.
+
+- Install the dependencies.
+
+```
+λ glide install
+```
+
+- Building is managed with `make`. To build for all targets, run:
+
+```
+λ make
+```
+
 ## How does Vasuki work?
 1. Query for [active](https://api.go.cd/current/#get-all-agents) + [queued](https://api.go.cd/current/#get-scheduled-jobs) builds. This is **Demand**.
 2. Query for all active agents + list of agents managed by the executor implementation. We then take a union of both. This is **Supply**.
