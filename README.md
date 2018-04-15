@@ -82,7 +82,7 @@ Dependencies are managed with [glide](https://github.com/Masterminds/glide).
 4. If Demand < Supply, do scale down using the executor implementation
 
 ## Known Issue
-When scaling down, there might a job which is stuck because it got assigned to an agent but Vasuki had just deleted that agent. This is because Vasuku doesn't get the latest status from [Agents Endpoint](https://api.go.cd/current/#get-all-agents) even after the agent is assigned a job. More details can be found on this [GoCD Dev mail list](https://groups.google.com/d/msg/go-cd-dev/tWmV0Rw9sJM/cz_qe4LcAQAJ) message.
+When scaling down, there might be a job which is stuck because it got assigned to an agent but Vasuki had just deleted that agent. This is because Vasuki doesn't get the latest status from [Agents Endpoint](https://api.go.cd/current/#get-all-agents) even after the agent is assigned a job. More details can be found on this [GoCD Dev mail list](https://groups.google.com/d/msg/go-cd-dev/tWmV0Rw9sJM/cz_qe4LcAQAJ) message.
 
 **Solution** - Decrease the value of `cruise.reschedule.hung.builds.interval` property in GoCD server. This enables faster detection of hung jobs and reschedules them. Start your GoCD server with the following environment variable `GO_SERVER_SYSTEM_PROPERTIES="-Dcruise.reschedule.hung.builds.interval=60000"` (60 seconds).
 
